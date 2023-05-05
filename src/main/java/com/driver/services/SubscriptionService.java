@@ -44,10 +44,14 @@ public class SubscriptionService {
          else
                 totalPrice=1000+noOfScreen*250;
 
+         subscription.setTotalAmountPaid(totalPrice);
+         userRepository.save(user);
+
         }
         catch(Exception e){throw new RuntimeException("user not found");}
 
-        subscriptionRepository.save(subscription);
+        //subscriptionRepository.save(subscription);
+
 
   return totalPrice;
 
