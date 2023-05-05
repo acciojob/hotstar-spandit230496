@@ -21,42 +21,39 @@ public class WebSeriesService {
     ProductionHouseRepository productionHouseRepository;
 
     public Integer addWebSeries(WebSeriesEntryDto webSeriesEntryDto)throws  Exception{
+//Add a webSeries to the database and update the ratings of the productionHouse
+        //Incase the seriesName is already present in the Db throw Exception("Series is already present")
+        //use function written in Repository Layer for the same
+        //Dont forget to save the production and webseries Repo
 
+        String seriesName = webSeriesEntryDto.getSeriesName();
 
+        if(webSeriesRepository.findBySeriesName(seriesName) != null)
+            throw new Exception("Series is already present");
 
-        WebSeries series = webSeriesRepository.findBySeriesName(webSeriesEntryDto.getSeriesName());
-        int updatedrating=0;
-        if(series==null) {
+        WebSeries webSeries = new WebSeries();
+        webSeries.setSeriesName(seriesName);
+        webSeries.setAgeLimit(webSeriesEntryDto.getAgeLimit());
+        webSeries.setRating(webSeriesEntryDto.getRating());
+        webSeries.setSubscriptionType(webSeriesEntryDto.getSubscriptionType());
 
-            series.setSeriesName(webSeriesEntryDto.getSeriesName());
-            series.setAgeLimit(webSeriesEntryDto.getAgeLimit());
-            series.setRating(webSeriesEntryDto.getRating());
-            series.setSubscriptionType(webSeriesEntryDto.getSubscriptionType());
-            try{
-                ProductionHouse productionHouse=productionHouseRepository.findById(webSeriesEntryDto.getProductionHouseId()).get();
-                productionHouse.getWebSeriesList().add(series);
+        ProductionHouse productionHouse = productionHouseRepository.findById(webSeriesEntryDto.getProductionHouseId()).get();
 
-                List<WebSeries>changedrating=productionHouse.getWebSeriesList();
-                for(WebSeries x:changedrating){
-                    updatedrating+=x.getRating();
-                }
-                updatedrating=updatedrating/changedrating.size();
-                productionHouse.setRatings(updatedrating);
-                series.setProductionHouse(productionHouse);
-                webSeriesRepository.save(series);
+        webSeries.setProductionHouse(productionHouse);
 
-            }
-            catch(Exception e){
-                throw new RuntimeException("Production House not found");
-            }
+        productionHouse.getWebSeriesList().add(webSeries);
+        double oldRating = productionHouse.getRatings();
+        double newSeriesRating = webSeries.getRating();
+        int newSize = productionHouse.getWebSeriesList().size();
 
-        }
-        else{
-            throw new RuntimeException("Series is already present");
-        }
+        double updatedRating = oldRating + (newSeriesRating-oldRating)/newSize;
 
+        productionHouse.setRatings(updatedRating);
 
-        return 1;
+        productionHouseRepository.save(productionHouse);
+        WebSeries updatedWebSeries = webSeriesRepository.save(webSeries);
+
+        return updatedWebSeries.getId();
     }
 
 }
