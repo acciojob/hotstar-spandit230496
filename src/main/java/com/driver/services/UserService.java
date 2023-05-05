@@ -25,33 +25,46 @@ public class UserService {
     public Integer addUser(User user){
 
         //Jut simply add the user to the Db and return the userId returned by the repository
-        userRepository.save(user);
+        User u = userRepository.save(user);
 
-        return user.getId();
+        return u.getId();
     }
 
     public Integer getAvailableCountOfWebSeriesViewable(Integer userId){
 
         //Return the count of all webSeries that a user can watch based on his ageLimit and subscriptionType
         //Hint: Take out all the Webseries from the WebRepository
-        List<WebSeries>list=webSeriesRepository.findAll();
+
+        User user = userRepository.findById(userId).get();
+
+        Subscription subscription = user.getSubscription();
+
+        SubscriptionType subscriptionType = subscription.getSubscriptionType();
+
+        List<WebSeries> webSeriesList = webSeriesRepository.findAll();
+
         int count=0;
-        try{User user=userRepository.findById(userId).get();
-        for(WebSeries x:list){
-            if(x.getAgeLimit()>=user.getAge()&&x.getSubscriptionType()==user.getSubscription().getSubscriptionType())
+
+        if(subscriptionType.toString().equals("BASIC")){
+            for(WebSeries web : webSeriesList){
+                if(web.getSubscriptionType().toString().equals("BASIC"))
+                    count++;
+            }
+        }
+        else if (subscriptionType.toString().equals("PRO")) {
+            for(WebSeries web : webSeriesList){
+                if(web.getSubscriptionType().toString().equals("PRO") || web.getSubscriptionType().toString().equals("BASIC") )
+                    count++;
+            }
+        }
+        else {
+            for(WebSeries web : webSeriesList){
                 count++;
+            }
         }
-
-
-
-
-        }
-        catch (Exception e){
-            throw new RuntimeException("User not found");
-        }
-
 
         return count;
+
     }
 
 
